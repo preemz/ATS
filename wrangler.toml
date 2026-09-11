@@ -1,0 +1,15 @@
+name = "daya-pipeline"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+account_id = "d918c010cfdd6073745a0cd6c33d3b98"
+
+[observability]
+enabled = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "daya-pipeline"
+database_id = "2d3f9405-8fb9-4220-9dd2-d79071a71d07"
+
+[vars]
+APP_NAME = "Daya Pipeline"

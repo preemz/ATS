@@ -1,0 +1,4 @@
+node_modules/
+.wrangler/
+boards*.json
+tag_assignments.json
