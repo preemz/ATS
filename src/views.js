@@ -423,3 +423,127 @@ export function kanbanPage({ user, jobs, job, stages, apps, query }) {
   return sh;
 }
 
+// ---- list pages (Candidates / Jobs) ----
+
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return String(iso).slice(0, 10);
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+}
+
+function fmtDateShort(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return String(iso).slice(0, 10);
+  const dd = String(d.getUTCDate()).padStart(2, '0');
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+  return `${dd}/${mm}/${d.getUTCFullYear()}`;
+}
+
+function statusBadge(st) {
+  const cls = st === 'active' ? 'badge-active' : st === 'closed' ? 'badge-closed' : 'badge-draft';
+  const label = st === 'active' ? 'Active' : st === 'closed' ? 'Closed' : 'Draft';
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function pagerHtml({ page, pageCount, baseParams }) {
+  if (pageCount <= 1) return '';
+  const link = (p) => {
+    const params = new URLSearchParams(baseParams);
+    if (p > 1) params.set('page', p); else params.delete('page');
+    const qs = params.toString();
+    return qs ? `?${qs}` : '?';
+  };
+  const nums = [];
+  for (let p = 1; p <= pageCount; p++) {
+    if (pageCount > 9 && Math.abs(p - page) > 3 && p !== 1 && p !== pageCount) {
+      if (nums[nums.length - 1] !== '…') nums.push('…');
+      continue;
+    }
+    nums.push(p);
+  }
+  return `<div class="pager">
+    ${page > 1 ? `<a href="${esc(link(page - 1))}">Previous</a>` : '<span class="pager"><button class="disabled">Previous</button></span>'}
+    ${nums.map((n) => n === '…' ? '<button disabled style="cursor:default">…</button>'
+      : n === page ? `<button class="cur">${n}</button>` : `<a href="${esc(link(n))}">${n}</a>`).join('')}
+    ${page < pageCount ? `<a href="${esc(link(page + 1))}">Next</a>` : '<button class="disabled">Next</button>'}
+  </div>`;
+}
+
+export function jobsListPage({ user, jobsNav, rows, page, pageCount, query }) {
+  const body = `<div class="narrow" style="max-width:1200px">
+    <div class="page-head">
+      <div>
+        <h1>Jobs</h1>
+        <p class="hint" style="margin:4px 0 0">${rows.reduce((s, r) => s + r.nApps, 0)} applications across ${rows.length} job${rows.length === 1 ? '' : 's'} on this page.</p>
+      </div>
+      <button class="btn btn-primary" data-opendialog="add-job">＋ Create job</button>
+    </div>
+    ${rows.length ? `<table class="grid">
+      <thead><tr><th>Name</th><th>Status</th><th>Job Type</th><th>Applications</th><th>Created</th><th style="width:44px"></th></tr></thead>
+      <tbody>
+      ${rows.map((j) => `<tr data-jobrow="${j.id}" data-title="${esc(j.title)}" data-status="${esc(j.status)}" data-jtype="${esc(j.jobType || 'Other')}" data-location="${esc(j.location || '')}">
+        <td><a href="/jobs/${j.id}" style="font-weight:600" class="job-name-link">${esc(j.title)}</a></td>
+        <td>${statusBadge(j.status)}</td>
+        <td style="color:var(--muted)">${esc(j.jobType || 'Other')}</td>
+        <td>${j.nApps}</td>
+        <td style="color:var(--muted)">${esc(fmtDateShort(j.createdAt))}</td>
+        <td><button class="row-menu" data-jobmenu="${j.id}" aria-haspopup="menu" aria-label="Open menu">⋮</button></td>
+      </tr>`).join('')}
+      </tbody></table>` : '<div class="empty-note">No jobs yet — create your first one.</div>'}
+    ${pagerHtml({ page, pageCount, baseParams: {} })}
+  </div>
+  <div id="dlg-root"></div>`;
+  return shell({ user, jobs: jobsNav, activeJobId: null, activeNav: '/jobs', title: 'Jobs', query, body });
+}
+
+export function candidatesPage({ user, jobsNav, rows, page, pageCount, total, tags, selectedTagIds, sort, dir, query, tagsByCandidate = {} }) {
+  const sortMark = (col) => sort === col ? `<span class="sortmark">${dir === 'asc' ? '▲' : '▼'}</span>` : '';
+  const params = { tags: selectedTagIds.join(','), sort, dir };
+  const body = `<div class="narrow" style="max-width:1200px">
+    <div class="page-head">
+      <div>
+        <h1>Candidates</h1>
+        <p class="hint" style="margin:4px 0 0" id="cand-count">${total} candidate${total === 1 ? '' : 's'}${selectedTagIds.length ? ' matching the selected tags' : ' across all searches'}.</p>
+      </div>
+    </div>
+    <div class="page-tools" style="position:relative">
+      <button class="filter-chip ${selectedTagIds.length ? 'has-active' : ''}" id="filter-chip" data-opentags>${svgFunnel()} Filter${selectedTagIds.length ? ` · ${selectedTagIds.length} tag${selectedTagIds.length === 1 ? '' : 's'}` : ''}</button>
+    </div>
+    ${rows.length ? `<table class="grid">
+      <thead><tr>
+        <th class="sortable" data-sort="name">Name${sortMark('name')}</th>
+        <th>Email</th>
+        <th>Application</th>
+        <th class="sortable" data-sort="applied">Applied${sortMark('applied')}</th>
+        <th style="width:44px"></th>
+      </tr></thead>
+      <tbody>
+      ${rows.map((r) => `<tr data-candrow="${r.candidateId}" data-app="${r.appId}"
+          data-first="${esc(r.firstName)}" data-last="${esc(r.lastName)}" data-email="${esc(r.email)}"
+          data-tags="${(tagsByCandidate[r.candidateId] || []).join(',')}">
+        <td style="font-weight:600">${esc(r.firstName)} ${esc(r.lastName)}</td>
+        <td style="color:var(--muted)">${r.email ? esc(r.email) : '—'}</td>
+        <td><a href="/jobs/${r.jobId}" class="app-link">${esc(r.jobTitle)}</a></td>
+        <td style="color:var(--muted)">${esc(fmtDate(r.appliedAt))}</td>
+        <td><button class="row-menu" data-candmenu="${r.candidateId}" aria-haspopup="menu" aria-label="Open menu">⋮</button></td>
+      </tr>`).join('')}
+      </tbody></table>` : `<div class="empty-note">No candidates ${selectedTagIds.length ? 'with the selected tags' : 'yet'}.</div>`}
+    ${pagerHtml({ page, pageCount, baseParams: params })}
+  </div>
+  <div id="dlg-root"></div>
+  <script>
+    window.__tags = ${JSON.stringify(tags.map((t) => ({ id: t.id, title: t.title })))};
+    window.__selTags = ${JSON.stringify(selectedTagIds)};
+  </script>`;
+  return shell({ user, jobs: jobsNav, activeJobId: null, activeNav: '/candidates', title: 'Candidates', query, body });
+}
+
+function svgFunnel() {
+  return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>`;
+}
+
+export { shell, sidebar };
