@@ -1,0 +1,30 @@
+{
+ "backgroundColor": "#1f0021",
+ "textColor": "#fffdfe",
+ "sections": [
+  {
+   "id": "s-hero",
+   "type": "hero",
+   "order": 0,
+   "data": {
+    "image": "",
+    "title": "Daya Ventures",
+    "description": "The world's first femtech venture studio. We systematically build and scale the companies closing the gender health gap.",
+    "backgroundColor": "#1f0021",
+    "primaryTextColor": "#faf9f6",
+    "secondaryTextColor": "#faf9f6"
+   }
+  },
+  {
+   "id": "s-positions",
+   "type": "openPositions",
+   "order": 1,
+   "data": {
+    "title": "Open positions",
+    "textColor": "#fffdfe",
+    "description": "",
+    "backgroundColor": "#1f0021"
+   }
+  }
+ ]
+}
