@@ -1,22 +1,22 @@
 # ATS
 
-A multi-board applicant tracking system — kanban hiring pipeline, careers page builder and job-board publishing — built on **Cloudflare Workers + D1** with **zero npm dependencies** (server-rendered HTML and vanilla JS, no build step).
+An applicant tracking system running entirely on Cloudflare Workers: a kanban hiring pipeline, a careers page builder, job board publishing, and a public application flow. Server-rendered HTML with a bit of vanilla JavaScript. No npm dependencies, no build step.
 
-## Features
+## What's inside
 
-- **Kanban pipeline** — drag-and-drop candidate cards across per-job columns; favourites, reject and interview suggestions; column management.
-- **Candidates** — deduplicated candidate list with tags, inline editing, search, filters, sorting and pagination.
-- **Jobs** — create, edit, publish, unpublish and close job posts; per-job settings.
-- **Job settings** — General, Notifications, Job Boards (Monster / Jooble / Careerjet / Indeed / LinkedIn) and a per-job Application Form builder.
-- **Careers page builder** — public careers site with a live-preview editor: global and per-section colors, hero, open positions, text, values, photo gallery, video and team-member blocks with drag-to-reorder.
-- **Public job pages & apply flow** — applications land straight on the kanban board, with per-job custom questions and configurable form fields.
-- **Email log** — outbound notifications and interview suggestions are recorded (demo mode).
+- **Kanban pipeline.** Drag candidate cards between per-job columns, reorder the columns themselves, star favourites, suggest interviews, and reject with one click.
+- **Candidates.** One list for every candidate, with tags, inline editing, search, filters, sorting and pagination.
+- **Jobs.** Create, edit, publish, unpublish and close job posts. Publish a job and it appears on the public careers page.
+- **Job settings.** Per job: general details, notification preferences, job board publishing (Monster, Jooble, Careerjet, Indeed, LinkedIn) and an application form builder.
+- **Careers page builder.** A live-preview editor for the public careers site. Colors, hero copy, open positions, plus text, values, photo gallery, video and team members sections you can drag into any order.
+- **Public pages.** Job detail pages with per-job custom questions and configurable fields. Applications land straight on the right board.
+- **Email log.** Interview suggestions and outbound notifications are recorded instead of sent (demo mode, no provider wired).
 
 ## Stack
 
-- Cloudflare Workers — a single worker, ES modules
-- Cloudflare D1 (SQLite) — schema in `schema.sql`, migrations in `migrations/`
-- Vanilla JS + CSS — no frameworks, no dependencies
+- Cloudflare Workers: one worker, ES modules
+- Cloudflare D1 (SQLite): schema in `schema.sql`, migrations in `migrations/`
+- Vanilla JavaScript and CSS, no frameworks or dependencies
 - PBKDF2 password hashing (WebCrypto), session cookies, CSRF-protected forms
 
 ## Layout
@@ -43,7 +43,7 @@ wrangler d1 execute <db> --local --file=schema.sql
 node scripts/seed.mjs
 ```
 
-The seed script expects a `boards-all.json` export that is intentionally **not included** in this repository (it contains personal data).
+The seed script needs a `boards-all.json` export, which isn't included here because it contains real people's data.
 
 ## Screenshots
 
